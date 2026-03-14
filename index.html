@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arecanut Disease Detection</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2e8b57, #3cb371, #98fb98);
+      background-size: 400% 400%;
+      animation: gradientBG 10s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .modal {
+      width: 90%;
+      max-width: 550px;
+      padding: 25px;
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      text-align: center;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      color: #2e8b57;
+    }
+
+    input[type="file"] {
+      margin: 10px 0;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      background: #2e8b57;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+
+    button:hover:enabled {
+      background: #246b45;
+    }
+
+    #status {
+      margin: 10px 0;
+      font-weight: bold;
+      color: #333;
+    }
+
+    #result {
+      margin-top: 15px;
+      font-size: 16px;
+      color: #444;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <h2>🌱 Arecanut Disease Detection</h2>
+    <input type="file" id="fileInput" />
+    <br>
+    <button id="predictBtn" onclick="uploadImage()" disabled>Predict</button>
+    <p id="status">Checking backend connection...</p>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    const backendURL = "http://127.0.0.1:8000";
+
+    async function checkBackend() {
+      try {
+        const response = await fetch(`${backendURL}/ping`);
+        if (response.ok) {
+          document.getElementById("status").innerText = "✅ Backend is online";
+          document.getElementById("predictBtn").disabled = false;
+        } else {
+          document.getElementById("status").innerText = "⚠️ Backend not responding";
+        }
+      } catch (error) {
+        document.getElementById("status").innerText = "❌ Cannot connect to backend";
+      }
+    }
+
+    window.onload = checkBackend;
+
+    async function uploadImage() {
+      const fileInput = document.getElementById("fileInput").files[0];
+      if (!fileInput) {
+        alert("Please select a file first!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput);
+
+      document.getElementById("result").innerText = "⏳ Processing...";
+
+      const response = await fetch(`${backendURL}/predict`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        document.getElementById("result").innerText = "Error: " + response.status;
+        return;
+      }
+
+      const data = await response.json();
+      document.getElementById("result").innerText =
+        "🌿 Prediction: " + data.class +
+        "\n📊 Confidence: " + (data.confidence * 100).toFixed(2) + "%" +
+        "\n💊 Medicine: " + data.medicine;
+    }
+  </script>
+</body>
+</html>
